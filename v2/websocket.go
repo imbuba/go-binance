@@ -1,6 +1,8 @@
 package binance
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -31,8 +33,12 @@ var wsServe = func(cfg *WsConfig, handler WsHandler, errHandler ErrHandler) (don
 		EnableCompression: false,
 	}
 
-	c, _, err := Dialer.Dial(cfg.Endpoint, nil)
+	c, resp, err := Dialer.Dial(cfg.Endpoint, nil)
 	if err != nil {
+		if resp != nil {
+			body, _ := io.ReadAll(resp.Body)
+			return nil, nil, fmt.Errorf("%w (status: %d, body: %s)", err, resp.StatusCode, body)
+		}
 		return nil, nil, err
 	}
 	c.SetReadLimit(655350)
